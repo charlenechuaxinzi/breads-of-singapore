@@ -122,7 +122,7 @@ Import the navbar component into ``App.svelte`` script block:
     import Navbar from './components/Navbar.svelte';
   </script>
 
-Replace the text *This is my map App** with ``<Navbar/>``. Your ``App.svelte`` file should look like this:
+Replace the text *This is my map App* with ``<Navbar/>``. Your ``App.svelte`` file should look like this:
 
 .. code-block:: javascript
 
@@ -139,3 +139,94 @@ Replace the text *This is my map App** with ``<Navbar/>``. Your ``App.svelte`` f
       text-align: center;
     }
   </style>
+
+Now you should see the black navbar at the top of your browser.
+
+5. Create a map component
+===========================
+
+Now we are going to create the map component.
+
+Create a new file called ``Map.svelte`` inside the ``components`` folder and write these lines of code:
+
+
+.. code-block:: javascript
+
+  <script>
+    import { onMount, onDestroy } from 'svelte'
+    import { Map } from 'maplibre-gl';
+    import 'maplibre-gl/dist/maplibre-gl.css';
+
+    let map;
+    let mapContainer;
+
+    onMount(() => {
+
+      const initialState = { lng: 1.4, lat: 41.6, zoom: 7 };
+
+      map = new Map({
+        container: mapContainer,
+        style: `https://demotiles.maplibre.org/style.json`,
+        center: [initialState.lng, initialState.lat],
+        zoom: initialState.zoom
+      });
+
+    });
+
+    onDestroy(() => {
+      map.remove();
+    });
+  </script>
+
+  <div class="map-wrap">
+    <div class="map" id="map" bind:this={mapContainer}></div>
+  </div>
+
+  <style>
+
+    .map-wrap {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 77px); /* calculate height of the screen minus the heading */
+    }
+
+    .map {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .watermark {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      z-index: 999;
+    }
+  </style>
+
+1. The ``container`` option sets the DOM element in which the map will be rendered. We'll assign the ``mapContainer`` ref expected by our component to an HTML element, which will act as a container. Keep in mind that the reference to ``mapContainer`` can only be used after the execution of the ``onMount`` lifecycle function.
+2. THe ``style`` option defines what style is the map going to use.
+3, The ``center`` and ``zoom`` options set the starting position of the map.
+4. The ``onDestroy`` fuction does the cleanup that should occur when the instance is destroyed.
+
+
+To display the Map we need to import the map component and add it to our main component ``App.svelte``.
+
+Import the map component into the ``App.svelte`` script block
+
+.. code-block:: javascript
+
+  <script>
+    import Navbar from './components/Navbar.svelte';
+    import Map from './components/Map.svelte';
+  </script>
+
+
+And add the ``<Map/>`` just below the Navbar in the template section. The template block should look like this
+
+.. code-block:: javascript
+
+  <div class="app">
+    <Navbar />
+    <Map />
+  </div>
