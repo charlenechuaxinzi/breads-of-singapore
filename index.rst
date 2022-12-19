@@ -262,6 +262,9 @@ And, just after the initialization of the map, on ``Map.svelte`` file, add the f
 We'll add an open data source of vector data provided by the ICGC, with a dataset of municipalities of Catalonia.
 Using this data source, we'll create and style two different layers (one for associated municipalites, and another one for none associated municipalities), and later we'll upload them to the map.
 
+
+``ASSOCIATED_MUNICIPALITIES`` and ``NO_ASSOCIATED_MUNICIPALITES`` are stored in the javascript code as constant variables. Later will show how to get this data from a google spreadsheet.
+
 This is the code:
 
 .. code-block:: javascript
@@ -358,6 +361,15 @@ This is the code:
             }
         	});
 
+      });
+
+      // change pointer on mouse over states
+      map.on('mouseenter', 'associated-munis', function () {
+      	map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'associated-munis', function () {
+      	map.getCanvas().style.cursor = '';
       });
 
     });
