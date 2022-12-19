@@ -5,8 +5,14 @@ MapLibre with Svelte
 1. Introduction
 =================
 
-This is a tutorial to display a map in Svelte using MapLibre GL JS.
+This is a tutorial to display a map an interactive map with Svelte using MapLibre GL JS.
 Based on the amptiler tutorial: https://docs.maptiler.com/svelte/maplibre-gl-js/how-to-use-maplibre-gl-js/
+
+The web map will have the following functionalities:
+
+- Visualize and query a Vector Tile layer from Catalonia municipalities
+- Controll which municipalities are visible through a sheet hosted on a GoogleSpreadSheet.
+- Append data to each municipality entity. Data available on IDESCAT API.
 
 
 2. Create an app
@@ -230,3 +236,159 @@ And add the ``<Map/>`` just below the Navbar in the template section. The templa
     <Navbar />
     <Map />
   </div>
+
+
+5. Map Controls
+===========================
+
+We'll add navigation controls to our map.
+
+Add the ``NavigationControl`` next to the Map object import from MapLibre GL.
+
+.. code-block:: javascript
+
+  import { Map, NavigationControl } from 'maplibre-gl';
+
+And, just after the initialization of the map, on ``Map.svelte`` file, add the following line:
+
+.. code-block:: javascript
+
+  map.addControl(new NavigationControl(), 'top-right');
+
+
+6. Add a VectorTile Layer
+===========================
+
+We'll add an open data source of vector data provided by the ICGC, with a dataset of municipalities of Catalonia.
+Using this data source, we'll create and style two different layers (one for associated municipalites, and another one for none associated municipalities), and later we'll upload them to the map.
+
+This is the code:
+
+.. code-block:: javascript
+
+  <script>
+    import { onMount, onDestroy } from 'svelte'
+    import { Map, NavigationControl } from 'maplibre-gl';
+    import 'maplibre-gl/dist/maplibre-gl.css';
+
+    let map;
+    let mapContainer;
+
+    onMount(() => {
+
+      const initialState = { lng: 1.4, lat: 41.6, zoom: 7 };
+
+      const ASSOCIATED_MUNICIPALITIES = [
+      	"in",
+      	"name",
+      	'Abrera', 'Àger', 'Agramunt', 'Agullana', 'Aiguaviva', 'Alàs i Cerc',
+      ]
+
+      ASSOCIATED_MUNICIPALITIES.push('Olot', 'Sant Joan les Fonts')
+
+      const NO_ASSOCIATED_MUNICIPALITIES = [
+      	"in",
+      	"name",
+      	'Abrera', 'Àger', 'Agramunt', 'Agullana', 'Aiguaviva', 'Alàs i Cerc',
+      ]
+
+
+      map = new Map({
+        container: mapContainer,
+        style: `https://demotiles.maplibre.org/style.json`,
+        center: [initialState.lng, initialState.lat],
+        zoom: initialState.zoom
+      });
+
+      map.addControl(new NavigationControl(), 'top-right');
+
+      map.on('load', function () {
+        map.addSource('municipalities', {
+            type: 'vector',
+            url: 'https://openicgc.github.io/divisions_administratives.json'
+          });
+      		// layer associated municipalities
+          map.addLayer({
+            'id': 'associated-munis',
+            'type': 'fill',
+            'source': 'municipalities',
+            'source-layer': 'boundary',
+            "filter": [
+
+      				"all",
+              [
+      					"==",
+      					"escala",
+      					"1M"
+      				],
+      				[
+      					"==",
+      					"class",
+      					"municipi"
+      				],
+
+      				ASSOCIATED_MUNICIPALITIES
+      			],
+            'paint': {
+              "fill-opacity": 0.8,
+              "fill-color": "blue",
+              "fill-outline-color": "red"
+            }
+        	});
+
+      		// layer not associated municipalities
+      		map.addLayer({
+            'id': 'no-associated-munis',
+            'type': 'fill',
+            'source': 'municipalities',
+            'source-layer': 'boundary',
+            "filter": [
+      				"all",
+              [
+      					"==",
+      					"escala",
+      					"1M"
+      				],
+      				NO_ASSOCIATED_MUNICIPALITIES
+      			],
+            'paint': {
+              "fill-opacity": 0.8,
+              "fill-color": "grey",
+              "fill-outline-color": "red"
+            }
+        	});
+
+      });
+
+    });
+
+    onDestroy(() => {
+      map.remove();
+    });
+  </script>
+
+  <div class="map-wrap">
+    <div class="map" id="map" bind:this={mapContainer}></div>
+  </div>
+
+  <style>
+
+    .map-wrap {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 77px); /* calculate height of the screen minus the heading */
+    }
+
+    .map {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .watermark {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      z-index: 999;
+    }
+  </style>
