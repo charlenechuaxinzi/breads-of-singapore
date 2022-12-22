@@ -333,9 +333,9 @@ This is the code:
       				ASSOCIATED_MUNICIPALITIES
       			],
             'paint': {
-              "fill-opacity": 0.8,
-              "fill-color": "blue",
-              "fill-outline-color": "red"
+              "fill-opacity": 0.9,
+              "fill-color": "green",
+              "fill-outline-color": "grey"
             }
         	});
 
@@ -356,8 +356,8 @@ This is the code:
       			],
             'paint': {
               "fill-opacity": 0.8,
-              "fill-color": "grey",
-              "fill-outline-color": "red"
+              "fill-color": "red",
+              "fill-outline-color": "grey"
             }
         	});
 
@@ -404,3 +404,69 @@ This is the code:
       z-index: 999;
     }
   </style>
+
+
+7. A Google Spread Sheet to control the map
+===============================================
+
+Sometimes, the person in charge to update a data visualization is not a web developer with knowledge of javascript or any programming language.
+In that case, using a graphic interface can be a solution to control the entities to display on the map.
+
+Now we are going to use a Google Spread Sheet to control the visible municipalities on the map.
+
+1. Create a google sheet, with the name ``map_municipalities``.
+2. Fill this google sheet with the same content of this excel file: :download:`municipalities_cat.xlsx<municipalities_cat.xlsx>`
+3. Make **public** the goolge sheet.
+4. The url of this file contains the ``id``. Copy this id as we'll use later.
+
+
+Add the following code to the **Map** component, just before creating the map. We'll create a function ``loadSheet`` to load this google sheet, which will be invoced when DOM is loaded.
+Replace the **sheetId** and **sheetName** with yours.
+
+
+.. code-block:: javascript
+
+  const sheetId = 'your-sheet-id';
+  const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?`;
+  const sheetName = 'your-name';
+  const query = encodeURIComponent('Select *')
+  const url = `${base}&sheet=${sheetName}&tq=${query}`
+
+  const data = []
+  document.addEventListener('DOMContentLoaded', loadSheet)
+
+  function loadSheet() {
+    	fetch(url)
+      	.then(res => res.text())
+        .then(rep => {
+        	//Remove additional text and extract only JSON:
+          const jsonData = JSON.parse(rep.substring(47).slice(0, -2));
+
+          const colz = [];
+          //Extract column labels
+          jsonData.table.cols.forEach((heading) => {
+          	if (heading.label) {
+            	let column = heading.label;
+              colz.push(column);
+            }
+          })
+          //extract row data:
+          jsonData.table.rows.forEach((rowData) => {
+          	const row = {};
+            colz.forEach((ele, ind) => {
+            	row[ele] = (rowData.c[ind] != null) ? rowData.c[ind].v : '';
+            })
+            data.push(row);
+    				if (row.ASSOCIATED == true) ASSOCIATED_MUNICIPALITIES.push(row.NOM_MUNICIPI);
+    				if (row.NO_ASSOCIATED == true) NO_ASSOCIATED_MUNICIPALITIES.push(row.NOM_MUNICIPI);
+
+          })
+        })
+    }
+
+
+Now, the google sheet controls the displayed municipalities.
+
+
+8. Show information on a popup
+================================
